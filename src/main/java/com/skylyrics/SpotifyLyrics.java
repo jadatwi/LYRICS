@@ -82,12 +82,23 @@ public class SpotifyLyrics {
         HttpRequest req = HttpRequest.newBuilder(URI.create("https://api.spotify.com/v1/me/player/currently-playing"))
                 .header("Authorization", "Bearer " + token).GET().build();
         HttpResponse<String> res = http.send(req, HttpResponse.BodyHandlers.ofString());
-        if (res.statusCode() == 401) { token = null; return; }
-        if (res.statusCode() != 200 || res.body().isEmpty()) { playing = false; return; }
+        int code = res.statusCode();
+        if (code == 401) { token = null; lastError = "Spotify 401: token rejected, retrying"; playing = false; return; }
+        if (code == 204 || (code == 200 && res.body().isEmpty())) {
+            lastError = "Spotify sees no active player (204). Press play in the Spotify app, same account.";
+            playing = false; return;
+        }
+        if (code != 200) {
+            String b = res.body() == null ? "" : res.body();
+            lastError = "Spotify error " + code + ": " + (b.length() > 120 ? b.substring(0, 120) : b);
+            playing = false; return;
+        }
+        lastError = "";
 
         JsonObject o = JsonParser.parseString(res.body()).getAsJsonObject();
         JsonElement item = o.get("item");
-        if (item == null || item.isJsonNull() || !o.get("is_playing").getAsBoolean()) { playing = false; return; }
+        if (item == null || item.isJsonNull()) { lastError = "Spotify: no track info (ad, podcast or local file?)"; playing = false; return; }
+        if (!o.get("is_playing").getAsBoolean()) { lastError = "Spotify says the track is paused"; playing = false; return; }
         JsonObject it = item.getAsJsonObject();
 
         JsonElement prog = o.get("progress_ms");
