@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "id": "skylyrics",
+  "version": "${version}",
+  "name": "SkyLyrics",
+  "description": "Spotify synced lyrics floating in the Minecraft sky.",
+  "authors": ["you"],
+  "license": "MIT",
+  "environment": "client",
+  "entrypoints": { "client": ["com.skylyrics.SkyLyricsClient"] },
+  "depends": {
+    "fabricloader": ">=0.18.0",
+    "minecraft": "~1.21.11",
+    "java": ">=21",
+    "fabric-api": "*"
+  }
+}
